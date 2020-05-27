@@ -12,7 +12,6 @@
 #include <iterator>
 #include <math.h>
 #include <numeric>
-#include <random>
 #include <string>
 #include <vector>
 
@@ -31,8 +30,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[])
    * NOTE: Consult particle_filter.h for more information about this method
    *   (and others in this file).
    */
-  num_particles = 100;            // TODO: Set the number of particles
-  std::default_random_engine gen; // Random number generator for Gaussian distribution
+  num_particles = 100; // TODO: Set the number of particles
 
   std::normal_distribution<double> distrib_x(x, std[0]);
   std::normal_distribution<double> distrib_y(y, std[1]);
@@ -65,6 +63,35 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
    *  http://en.cppreference.com/w/cpp/numeric/random/normal_distribution
    *  http://www.cplusplus.com/reference/random/default_random_engine/
    */
+
+  double epslon = 0.0001;
+
+  for (Particle &particle : particles)
+  {
+    // Apply motion model
+    if (fabs(yaw_rate) > epslon)
+    {
+      double theta_0 = particle.theta;               // inital yaw
+      double theta_1 = theta_0 + yaw_rate * delta_t; // final yaw
+      particle.x += (velocity / yaw_rate) * (std::sin(theta_1) - std::sin(theta_0));
+      particle.y += (velocity / yaw_rate) * (std::cos(theta_0) - std::cos(theta_1));
+      particle.theta = theta_1;
+    }
+    else
+    {
+      particle.x += velocity * delta_t * std::cos(particle.theta);
+      particle.y += velocity * delta_t * std::sin(particle.theta);
+    }
+
+    // Add noise
+    std::normal_distribution<double> distrib_x(particle.x, std_pos[0]);
+    std::normal_distribution<double> distrib_y(particle.y, std_pos[1]);
+    std::normal_distribution<double> distrib_theta(particle.theta, std_pos[2]);
+
+    particle.x = distrib_x(gen);
+    particle.y = distrib_y(gen);
+    particle.theta = distrib_theta(gen);
+  }
 }
 
 void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
