@@ -69,6 +69,17 @@ public:
                        std::vector<LandmarkObs> &observations);
 
   /**
+   * landmarksInRange Checks which groundtruth landmarks are in sensor range of a particle
+   * @param sensor_range sensor range of the particle
+   * @param particle The referenced particle
+   * @param map_landmarks landmark groundtruth
+   * @return vector of landmarks in sensor range
+   */
+  std::vector<LandmarkObs> landmarksInRange(const Particle particle,
+                                            const double sensor_range,
+                                            const Map &map_landmarks);
+
+  /**
    * transformToMapCoordinates Transforms observations from local vehicle coordinates to global map coordinates
    * @param observations Vector of landmark observations in vehicle coordinates
    * @param particle The particle which is set as the reference for tranformation
