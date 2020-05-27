@@ -46,7 +46,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[])
     particle.weight = 1.0;
 
     particles.push_back(particle);
-    weights.push_back(particle.weight);
+    // weights.push_back(particle.weight);
   }
 
   is_initialized = true;
@@ -192,7 +192,7 @@ double ParticleFilter::calculateWeight(const vector<LandmarkObs> &predicted_land
       {
         x = predicted_landmarks.x;
         y = predicted_landmarks.y;
-        // break;
+        break;
       }
     }
     particle_weight *= multivariateGaussian(sig_x, sig_y, x, y, mu_x, mu_y);
@@ -234,6 +234,43 @@ void ParticleFilter::resample()
    * NOTE: You may find std::discrete_distribution helpful here.
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
+  std::vector<double> weights;
+  double weight_normalizer = 0.0;
+  double epslon = 0.0001;
+
+  for (Particle &particle : particles)
+  {
+    weight_normalizer += particle.weight;
+  }
+
+  if (fabs(weight_normalizer) > epslon)
+  {
+    // Normalize weights
+    for (Particle &particle : particles)
+    {
+      weights.push_back(particle.weight / weight_normalizer);
+    }
+  }
+
+  vector<Particle> resampled_particles;
+  std::uniform_int_distribution<uint8_t> particle_indices(0, num_particles - 1);
+  uint8_t index = particle_indices(gen);
+  double beta = 0.0;
+  double double_max_weight = 2.0 * *max_element(weights.begin(), weights.end());
+  std::uniform_real_distribution<double> random_weight(0.0, double_max_weight);
+
+  // Spin the resampling wheel
+  for (int i = 0; i < num_particles; i++)
+  {
+    beta += random_weight(gen);
+    while (beta > weights[index])
+    {
+      beta -= weights[index];
+      index = (index + 1) % num_particles;
+    }
+    resampled_particles.push_back(particles[index]);
+  }
+  particles = resampled_particles;
 }
 
 void ParticleFilter::SetAssociations(Particle &particle,
