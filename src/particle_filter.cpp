@@ -11,7 +11,6 @@
 #include <iostream>
 #include <iterator>
 #include <math.h>
-#include <numeric>
 #include <string>
 #include <vector>
 
@@ -105,6 +104,23 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
    *   probably find it useful to implement this method and use it as a helper
    *   during the updateWeights phase.
    */
+
+  for (LandmarkObs &ob : observations)
+  {
+    double min_distance = std::numeric_limits<double>::max();
+    int idx = -1;
+    for (LandmarkObs &pred : predicted)
+    {
+      double ob_pred_distance = dist(ob.x, ob.y, pred.x, pred.y);
+      if (ob_pred_distance < min_distance)
+      {
+        min_distance = ob_pred_distance;
+        idx = pred.id;
+      }
+    }
+    // Associate the nearest prediction ID to observation
+    ob.id = idx;
+  }
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
