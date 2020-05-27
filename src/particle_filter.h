@@ -62,10 +62,10 @@ public:
   /**
    * dataAssociation Finds which observations correspond to which landmarks
    *   (likely by using a nearest-neighbors data association).
-   * @param predicted Vector of predicted landmark observations
+   * @param predicted_landmarks Vector of predicted landmark observations
    * @param observations Vector of landmark observations
    */
-  void dataAssociation(std::vector<LandmarkObs> predicted,
+  void dataAssociation(const std::vector<LandmarkObs> &predicted_landmarks,
                        std::vector<LandmarkObs> &observations);
 
   /**
@@ -87,6 +87,30 @@ public:
    */
   std::vector<LandmarkObs> transformToMapCoordinates(const std::vector<LandmarkObs> &observations,
                                                      const Particle &particle);
+
+  /**
+   * multivariateGaussian Calculates the Multivariate-Gaussian of transformed measurements and  nearest landmarks
+   * @param sig_x standard deviation x of landmarks
+   * @param sig_y standard deviation y of landmarks
+   * @param x x observation in map coordinates
+   * @param y y observation in map coordinates
+   * @param mu_x x coordinate of the nearest landmark
+   * @param mu_y y coordinate of the nearest landmark
+   * @return Multivariate-Gaussian
+   */
+  double multivariateGaussian(double sig_x, double sig_y, double x,
+                              double y, double mu_x, double mu_y);
+
+  /**
+   * calculateWeight Calculates the importance weight for each particle
+   * @param predicted_landmarks predicted landmarks
+   * @param transformed_observations transformed observations
+   * @param std_landmark stand deviations for landmarks
+   * @return importance weight for the particle
+   */
+  double calculateWeight(const std::vector<LandmarkObs> &predicted_landmarks,
+                         const std::vector<LandmarkObs> &transformed_observations,
+                         double std_landmark[]);
 
   /**
    * updateWeights Updates the weights for each particle based on the likelihood

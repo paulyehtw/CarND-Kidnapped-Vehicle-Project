@@ -93,7 +93,7 @@ void ParticleFilter::prediction(double delta_t, double std_pos[],
   }
 }
 
-void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
+void ParticleFilter::dataAssociation(const vector<LandmarkObs> &predicted_landmarks,
                                      vector<LandmarkObs> &observations)
 {
   /**
@@ -109,7 +109,7 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   {
     double min_distance = std::numeric_limits<double>::max();
     int idx = -1;
-    for (LandmarkObs &pred : predicted)
+    for (LandmarkObs pred : predicted_landmarks)
     {
       double ob_pred_distance = dist(ob.x, ob.y, pred.x, pred.y);
       if (ob_pred_distance < min_distance)
@@ -127,7 +127,7 @@ std::vector<LandmarkObs> ParticleFilter::landmarksInRange(const Particle particl
                                                           const double sensor_range,
                                                           const Map &map_landmarks)
 {
-  vector<LandmarkObs> predictions{};
+  vector<LandmarkObs> predicted_landmarks{};
   const std::vector<Map::single_landmark_s> landmark_list = map_landmarks.landmark_list;
   for (Map::single_landmark_s landmark : landmark_list)
   {
@@ -137,10 +137,10 @@ std::vector<LandmarkObs> ParticleFilter::landmarksInRange(const Particle particl
       predcted_landmark.id = landmark.id_i;
       predcted_landmark.x = landmark.x_f;
       predcted_landmark.y = landmark.y_f;
-      predictions.push_back(predcted_landmark);
+      predicted_landmarks.push_back(predcted_landmark);
     }
   }
-  return predictions;
+  return predicted_landmarks;
 }
 
 std::vector<LandmarkObs> ParticleFilter::transformToMapCoordinates(const std::vector<LandmarkObs> &observations,
@@ -156,6 +156,48 @@ std::vector<LandmarkObs> ParticleFilter::transformToMapCoordinates(const std::ve
     transformed_observations.push_back(transformed_ob);
   }
   return transformed_observations;
+}
+
+double ParticleFilter::multivariateGaussian(double sig_x, double sig_y, double x,
+                                            double y, double mu_x, double mu_y)
+{
+  // calculate normalization term
+  double gauss_norm = 1 / (2 * M_PI * sig_x * sig_y);
+
+  // calculate exponent
+  double exponent = (pow(x - mu_x, 2) / (2 * pow(sig_x, 2))) + (pow(y - mu_y, 2) / (2 * pow(sig_y, 2)));
+
+  // calculate weight using normalization terms and exponent
+  double weight = gauss_norm * exp(-exponent);
+
+  return weight;
+}
+
+double ParticleFilter::calculateWeight(const vector<LandmarkObs> &predicted_landmarks,
+                                       const vector<LandmarkObs> &transformed_observations,
+                                       double std_landmark[])
+{
+  double particle_weight = 1.0;
+  double sig_x = std_landmark[0];
+  double sig_y = std_landmark[1];
+  double x;
+  double y;
+  for (LandmarkObs transformed_ob : transformed_observations)
+  {
+    double mu_x = transformed_ob.x;
+    double mu_y = transformed_ob.y;
+    for (LandmarkObs predicted_landmarks : transformed_observations)
+    {
+      if (predicted_landmarks.id == transformed_ob.id)
+      {
+        x = predicted_landmarks.x;
+        y = predicted_landmarks.y;
+        // break;
+      }
+    }
+    particle_weight *= multivariateGaussian(sig_x, sig_y, x, y, mu_x, mu_y);
+  }
+  return particle_weight;
 }
 
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
@@ -178,7 +220,9 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   for (Particle particle : particles)
   {
     vector<LandmarkObs> transformed_observations = transformToMapCoordinates(observations, particle);
-    vector<LandmarkObs> predictions = landmarksInRange(particle, sensor_range, map_landmarks);
+    vector<LandmarkObs> predicted_landmarks = landmarksInRange(particle, sensor_range, map_landmarks);
+    dataAssociation(predicted_landmarks, transformed_observations);
+    particle.weight = calculateWeight(predicted_landmarks, transformed_observations, std_landmark);
   }
 }
 
