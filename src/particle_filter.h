@@ -69,6 +69,15 @@ public:
                        std::vector<LandmarkObs> &observations);
 
   /**
+   * transformToMapCoordinates Transforms observations from local vehicle coordinates to global map coordinates
+   * @param observations Vector of landmark observations in vehicle coordinates
+   * @param particle The particle which is set as the reference for tranformation
+   * @return transformed_observations in global map coordinates
+   */
+  std::vector<LandmarkObs> transformToMapCoordinates(const std::vector<LandmarkObs> &observations,
+                                                     const Particle &particle);
+
+  /**
    * updateWeights Updates the weights for each particle based on the likelihood
    *   of the observed measurements.
    * @param sensor_range Range [m] of sensor

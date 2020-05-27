@@ -123,6 +123,21 @@ void ParticleFilter::dataAssociation(vector<LandmarkObs> predicted,
   }
 }
 
+std::vector<LandmarkObs> ParticleFilter::transformToMapCoordinates(const std::vector<LandmarkObs> &observations,
+                                                                   const Particle &particle)
+{
+  vector<LandmarkObs> transformed_observations{};
+  for (LandmarkObs ob : observations)
+  {
+    LandmarkObs transformed_ob;
+    transformed_ob.id = ob.id;
+    transformed_ob.x = particle.x + (cos(particle.theta) * ob.x) - (sin(particle.theta) * ob.y);
+    transformed_ob.y = particle.y + (sin(particle.theta) * ob.x) + (cos(particle.theta) * ob.y);
+    transformed_observations.push_back(transformed_ob);
+  }
+  return transformed_observations;
+}
+
 void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
                                    const vector<LandmarkObs> &observations,
                                    const Map &map_landmarks)
@@ -140,6 +155,10 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
+  for (Particle particle : particles)
+  {
+    vector<LandmarkObs> transformed_observations = transformToMapCoordinates(observations, particle);
+  }
 }
 
 void ParticleFilter::resample()
