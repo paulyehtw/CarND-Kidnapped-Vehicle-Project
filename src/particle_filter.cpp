@@ -186,12 +186,12 @@ double ParticleFilter::calculateWeight(const vector<LandmarkObs> &predicted_land
   {
     double mu_x = transformed_ob.x;
     double mu_y = transformed_ob.y;
-    for (LandmarkObs predicted_landmarks : predicted_landmarks)
+    for (LandmarkObs predicted_landmark : predicted_landmarks)
     {
-      if (predicted_landmarks.id == transformed_ob.id)
+      if (predicted_landmark.id == transformed_ob.id)
       {
-        x = predicted_landmarks.x;
-        y = predicted_landmarks.y;
+        x = predicted_landmark.x;
+        y = predicted_landmark.y;
         break;
       }
     }
