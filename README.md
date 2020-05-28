@@ -139,5 +139,117 @@ The things the grading code is looking for are:
 
 2. **Performance**: your particle filter should complete execution within the time of 100 seconds.
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+# Writeup for submission
+
+<p align="center">
+  <img  src="demo_images/particle_filter.gif">
+</p>
+
+---
+
+## Particle Filter Workflow
+1. Initialize uniformly the particles and weights
+2. Predict particle states
+3. Update weights
+4. Resampling
+5. Loop over from step 2
+
+---
+
+### Initialize particles
+```
+void ParticleFilter::init(double x, double y, double theta, double std[])
+{
+  num_particles = 100; // TODO: Set the number of particles
+
+  std::normal_distribution<double> distrib_x(x, std[0]);
+  std::normal_distribution<double> distrib_y(y, std[1]);
+  std::normal_distribution<double> distrib_theta(theta, std[2]);
+
+  // Initialize every particle and its weight
+  for (uint8_t idx = 0; idx < num_particles; ++idx)
+  {
+    Particle particle;
+    particle.id = idx;
+    particle.x = distrib_x(gen);
+    particle.y = distrib_y(gen);
+    particle.theta = distrib_theta(gen);
+    particle.weight = 1.0;
+
+    particles.push_back(particle);
+    weights.push_back(particle.weight);
+  }
+
+  is_initialized = true;
+}
+```
+
+---
+
+### Predict
+```
+void ParticleFilter::prediction(double delta_t, double std_pos[],
+                                double velocity, double yaw_rate)
+{
+  double epslon = 0.0001;
+
+  for (Particle &particle : particles)
+  {
+    // Apply motion model
+    if (fabs(yaw_rate) > epslon)
+    {
+      double theta_0 = particle.theta;               // inital yaw
+      double theta_1 = theta_0 + yaw_rate * delta_t; // final yaw
+      particle.x += (velocity / yaw_rate) * (std::sin(theta_1) - std::sin(theta_0));
+      particle.y += (velocity / yaw_rate) * (std::cos(theta_0) - std::cos(theta_1));
+      particle.theta = theta_1;
+    }
+    else
+    {
+      particle.x += velocity * delta_t * std::cos(particle.theta);
+      particle.y += velocity * delta_t * std::sin(particle.theta);
+    }
+
+    // Add noise
+    std::normal_distribution<double> distrib_x(particle.x, std_pos[0]);
+    std::normal_distribution<double> distrib_y(particle.y, std_pos[1]);
+    std::normal_distribution<double> distrib_theta(particle.theta, std_pos[2]);
+
+    particle.x = distrib_x(gen);
+    particle.y = distrib_y(gen);
+    particle.theta = distrib_theta(gen);
+  }
+}
+```
+
+### Update weights
+```
+void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
+                                   const vector<LandmarkObs> &observations,
+                                   const Map &map_landmarks)
+{
+  for (Particle &particle : particles)
+  {
+    vector<LandmarkObs> transformed_observations = transformToMapCoordinates(observations, particle);
+    vector<LandmarkObs> predicted_landmarks = landmarksInRange(particle, sensor_range, map_landmarks);
+    dataAssociation(predicted_landmarks, transformed_observations);
+    particle.weight = calculateWeight(predicted_landmarks, transformed_observations, std_landmark);
+  }
+}
+```
+
+---
+
+### Resampling
+```
+void ParticleFilter::resample()
+{
+  normalizeWeights();
+  resamplingWheel();
+}
+```
+
+---
+
+### Result
+Check [particle_filter.mp4](demo_images/particle_filter.mp4)
