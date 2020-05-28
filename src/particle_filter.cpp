@@ -226,14 +226,8 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
   }
 }
 
-void ParticleFilter::resample()
+void ParticleFilter::normalizeWeights()
 {
-  /**
-   * TODO: Resample particles with replacement with probability proportional
-   *   to their weight.
-   * NOTE: You may find std::discrete_distribution helpful here.
-   *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
-   */
   double weight_normalizer = 0.0;
   double epslon = 0.0001;
 
@@ -250,7 +244,10 @@ void ParticleFilter::resample()
       weights[i] = particles[i].weight / weight_normalizer;
     }
   }
+}
 
+void ParticleFilter::resamplingWheel()
+{
   vector<Particle> resampled_particles;
   std::uniform_int_distribution<uint8_t> particle_indices(0, num_particles - 1);
   uint8_t index = particle_indices(gen);
@@ -270,6 +267,18 @@ void ParticleFilter::resample()
     resampled_particles.push_back(particles[index]);
   }
   particles = resampled_particles;
+}
+
+void ParticleFilter::resample()
+{
+  /**
+   * TODO: Resample particles with replacement with probability proportional
+   *   to their weight.
+   * NOTE: You may find std::discrete_distribution helpful here.
+   *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
+   */
+  normalizeWeights();
+  resamplingWheel();
 }
 
 void ParticleFilter::SetAssociations(Particle &particle,

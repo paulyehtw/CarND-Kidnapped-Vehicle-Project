@@ -126,6 +126,16 @@ public:
                      const Map &map_landmarks);
 
   /**
+   * normalizeWeights Normalizes weights for resampling
+   */
+  void normalizeWeights();
+
+  /**
+   * resamplingWheel Spins the "Wheel" to resample particles
+   */
+  void resamplingWheel();
+
+  /**
    * resample Resamples from the updated set of particles to form
    *   the new set of particles.
    */
