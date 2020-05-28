@@ -46,7 +46,7 @@ void ParticleFilter::init(double x, double y, double theta, double std[])
     particle.weight = 1.0;
 
     particles.push_back(particle);
-    // weights.push_back(particle.weight);
+    weights.push_back(particle.weight);
   }
 
   is_initialized = true;
@@ -186,7 +186,7 @@ double ParticleFilter::calculateWeight(const vector<LandmarkObs> &predicted_land
   {
     double mu_x = transformed_ob.x;
     double mu_y = transformed_ob.y;
-    for (LandmarkObs predicted_landmarks : transformed_observations)
+    for (LandmarkObs predicted_landmarks : predicted_landmarks)
     {
       if (predicted_landmarks.id == transformed_ob.id)
       {
@@ -217,7 +217,7 @@ void ParticleFilter::updateWeights(double sensor_range, double std_landmark[],
    *   and the following is a good resource for the actual equation to implement
    *   (look at equation 3.33) http://planning.cs.uiuc.edu/node99.html
    */
-  for (Particle particle : particles)
+  for (Particle &particle : particles)
   {
     vector<LandmarkObs> transformed_observations = transformToMapCoordinates(observations, particle);
     vector<LandmarkObs> predicted_landmarks = landmarksInRange(particle, sensor_range, map_landmarks);
@@ -234,7 +234,6 @@ void ParticleFilter::resample()
    * NOTE: You may find std::discrete_distribution helpful here.
    *   http://en.cppreference.com/w/cpp/numeric/random/discrete_distribution
    */
-  std::vector<double> weights;
   double weight_normalizer = 0.0;
   double epslon = 0.0001;
 
@@ -246,9 +245,9 @@ void ParticleFilter::resample()
   if (fabs(weight_normalizer) > epslon)
   {
     // Normalize weights
-    for (Particle &particle : particles)
+    for (size_t i = 0; i < particles.size(); ++i)
     {
-      weights.push_back(particle.weight / weight_normalizer);
+      weights[i] = particles[i].weight / weight_normalizer;
     }
   }
 

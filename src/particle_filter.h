@@ -166,7 +166,7 @@ private:
   bool is_initialized;
 
   // Vector of weights of all particles
-  // std::vector<double> weights;
+  std::vector<double> weights;
 
   // Random number generator for Gaussian distribution
   std::default_random_engine gen;
